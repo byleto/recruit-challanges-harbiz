@@ -1,17 +1,17 @@
-import axios from "axios";
+import axios from 'axios';
 
-import "bootstrap/dist/css/bootstrap.min.css";
-import { useEffect, useState } from "react";
-import Container from "react-bootstrap/Container";
-import Form from "react-bootstrap/Form";
-import Image from "react-bootstrap/Image";
-import Spinner from "react-bootstrap/Spinner";
-import Stack from "react-bootstrap/Stack";
-import Table from "react-bootstrap/Table";
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { useEffect, useMemo, useState } from 'react';
+import Container from 'react-bootstrap/Container';
+import Form from 'react-bootstrap/Form';
+import Image from 'react-bootstrap/Image';
+import Spinner from 'react-bootstrap/Spinner';
+import Stack from 'react-bootstrap/Stack';
+import Table from 'react-bootstrap/Table';
 
-import { useQuery } from "react-query";
+import { useQuery } from 'react-query';
 
-const USERS_RECORD_LIMIT = 10;
+const USERS_RECORD_LIMIT = 20;
 const USERS_ENDPOINT_URL = `https://randomuser.me/api/?results=${USERS_RECORD_LIMIT}`;
 
 const Username = ({ picture, name }) => {
@@ -29,19 +29,27 @@ const getUsers = async () => {
 };
 
 export const UsersPage = () => {
-  const [data, setData] = useState({ results: [] });
   const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [gender, setGender] = useState('all');
 
-  const isEnabled = data?.results?.length === 0;
-  const usersQuery = useQuery("users", getUsers, {
+  const filteredUsers = useMemo(() => {
+    const genderFilter = (userGender) => gender === 'all'? true : userGender.toLowerCase() === gender.toLocaleLowerCase();
+    const nameFilter = (userName) => userName.toLowerCase().includes(name.toLowerCase())
+    const emailFilter = (userEmail) => userEmail.toLowerCase().includes(email.toLowerCase())
+    return users.filter((user) => nameFilter(user.name) && genderFilter(user.gender) && emailFilter(user.email));
+    
+  }, [users, gender, name, email]);
+  
+  const isEnabled = users.length === 0;
+  const usersQuery = useQuery('users', getUsers, {
     enabled: isEnabled,
   });
   const { data: rawUsersData, isLoading, isFetching, isSuccess } = usersQuery;
 
   useEffect(() => {
     if (isSuccess) {
-      setData(rawUsersData);
       const formattedUsers = rawUsersData.results.map((user) => ({
         id: user.id.value,
         name: `${user.name.first} ${user.name.last}`,
@@ -52,18 +60,12 @@ export const UsersPage = () => {
         picture: user.picture.thumbnail,
       }));
       setUsers(formattedUsers);
-      setFilteredUsers(formattedUsers);
     }
   }, [isSuccess, rawUsersData]);
 
   if (isLoading || isFetching) {
     return <Spinner animation="border" />;
   }
-
-  const onChangeName = (event) => {
-    event.preventDefault();
-    setFilteredUsers(users.filter((user) => user.name.toLowerCase().includes(event.target.value)));
-  };
 
   return (
     <Container>
@@ -72,19 +74,24 @@ export const UsersPage = () => {
         <Form>
           <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
             <Form.Label>Name</Form.Label>
-            <Form.Control onChange={onChangeName} placeholder="name of user" />
+            <Form.Control onChange={(e) => setName(e.target.value)} value={name} placeholder="name of user" />
           </Form.Group>
           <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
             <Form.Label>Gender</Form.Label>
-            <Form.Select>
-              <option>Select a gender</option>
+            <Form.Select onChange={(e) => setGender(e.target.value)} value={gender}>
+              <option value="all">Select a gender</option>
               <option value="male">Male</option>
-              <option value="Female">Female</option>
+              <option value="female">Female</option>
             </Form.Select>
           </Form.Group>
           <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
             <Form.Label>Email address</Form.Label>
-            <Form.Control type="email" placeholder="name@example.com" />
+            <Form.Control
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              type="email"
+              placeholder="name@example.com"
+            />
           </Form.Group>
         </Form>
         <Table striped bordered hover>
@@ -99,7 +106,7 @@ export const UsersPage = () => {
           </thead>
 
           <tbody>
-            {filteredUsers.map((user, index) => (
+            {filteredUsers?.map((user, index) => (
               <tr key={user?.id || index}>
                 <td>
                   <Username name={user.name} picture={user.picture} />
