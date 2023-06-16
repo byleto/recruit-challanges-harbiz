@@ -30,7 +30,8 @@ const getUsers = async () => {
 
 export const UsersPage = () => {
   const [data, setData] = useState({ results: [] });
-  const [users, seUsers] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
 
   const isEnabled = data?.results?.length === 0;
   const usersQuery = useQuery("users", getUsers, {
@@ -50,7 +51,8 @@ export const UsersPage = () => {
         phone: user.phone,
         picture: user.picture.thumbnail,
       }));
-      seUsers(formattedUsers);
+      setUsers(formattedUsers);
+      setFilteredUsers(formattedUsers);
     }
   }, [isSuccess, rawUsersData]);
 
@@ -60,6 +62,7 @@ export const UsersPage = () => {
 
   const onChangeName = (event) => {
     event.preventDefault();
+    setFilteredUsers(users.filter((user) => user.name.toLowerCase().includes(event.target.value)));
   };
 
   return (
@@ -69,7 +72,7 @@ export const UsersPage = () => {
         <Form>
           <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
             <Form.Label>Name</Form.Label>
-            <Form.Control placeholder="name of user" />
+            <Form.Control onChange={onChangeName} placeholder="name of user" />
           </Form.Group>
           <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
             <Form.Label>Gender</Form.Label>
@@ -84,33 +87,31 @@ export const UsersPage = () => {
             <Form.Control type="email" placeholder="name@example.com" />
           </Form.Group>
         </Form>
-        {isSuccess && (
-          <Table striped bordered hover>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>DOB</th>
-                <th>Email</th>
-                <th>Gender</th>
-                <th>Phone</th>
-              </tr>
-            </thead>
+        <Table striped bordered hover>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>DOB</th>
+              <th>Email</th>
+              <th>Gender</th>
+              <th>Phone</th>
+            </tr>
+          </thead>
 
-            <tbody>
-              {users.map((user, index) => (
-                <tr key={user?.id || index}>
-                  <td>
-                    <Username name={user.name} picture={user.picture} />
-                  </td>
-                  <td>{user.dob}</td>
-                  <td>{user.email}</td>
-                  <td>{user.gender}</td>
-                  <td>{user.phone}</td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        )}
+          <tbody>
+            {filteredUsers.map((user, index) => (
+              <tr key={user?.id || index}>
+                <td>
+                  <Username name={user.name} picture={user.picture} />
+                </td>
+                <td>{user.dob}</td>
+                <td>{user.email}</td>
+                <td>{user.gender}</td>
+                <td>{user.phone}</td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
       </Stack>
     </Container>
   );
