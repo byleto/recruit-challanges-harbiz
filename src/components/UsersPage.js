@@ -9,6 +9,7 @@ import Spinner from 'react-bootstrap/Spinner';
 import Stack from 'react-bootstrap/Stack';
 import Table from 'react-bootstrap/Table';
 import { sortByKey } from './utils';
+import { ArrowDown, ArrowUp } from 'feather-icons-react';
 
 import { useQuery } from 'react-query';
 
@@ -24,6 +25,13 @@ const Username = ({ picture, name }) => {
   );
 };
 
+const SortOrderIcon = ({ order }) => {
+  if (order === 'none') {
+    return null;
+  }
+  return order === 'asc' ? <ArrowDown size="16" /> : <ArrowUp size="16" />;
+};
+
 const getUsers = async () => {
   const response = await axios.get(USERS_ENDPOINT_URL);
   return response.data;
@@ -35,6 +43,7 @@ export const UsersPage = () => {
   const [email, setEmail] = useState('');
   const [gender, setGender] = useState('all');
   const [sortBy, setSortBy] = useState('');
+  const [sortOrder, setSortOrder] = useState('none');
 
   const filteredUsers = useMemo(() => {
     const genderFilter = (userGender) =>
@@ -45,8 +54,9 @@ export const UsersPage = () => {
     return sortByKey(
       users.filter((user) => nameFilter(user.name) && genderFilter(user.gender) && emailFilter(user.email)),
       sortBy,
+      sortOrder,
     );
-  }, [users, sortBy, gender, name, email]);
+  }, [users, sortBy, sortOrder, gender, name, email]);
 
   const isEnabled = users.length === 0;
   const usersQuery = useQuery('users', getUsers, {
@@ -72,6 +82,29 @@ export const UsersPage = () => {
   if (isLoading || isFetching) {
     return <Spinner animation="border" />;
   }
+
+  const onClickColumHeader = (e) => {
+    const id = e.target.id;
+    if (id !== sortBy) {
+      setSortOrder('none');
+    }
+    setSortBy(id);
+    const sortOrderNextValue = {
+      none: 'asc',
+      asc: 'desc',
+      desc: 'none',
+    };
+    const newSortOder = sortOrderNextValue[sortOrder];
+    setSortOrder(newSortOder);
+  };
+
+  const SorteableColumnHeader = ({ onClick, name, text }) => {
+    return (
+      <th id={name} onClick={onClick}>
+        {text} {sortBy === name ? <SortOrderIcon order={sortOrder} /> : null}
+      </th>
+    );
+  };
 
   return (
     <Container>
@@ -103,10 +136,10 @@ export const UsersPage = () => {
         <Table striped bordered hover>
           <thead>
             <tr>
-              <th onClick={() => setSortBy('name')}>Name</th>
-              <th onClick={() => setSortBy('dob')}>DOB</th>
-              <th onClick={() => setSortBy('email')}>Email</th>
-              <th onClick={() => setSortBy('gender')}>Gender</th>
+              <SorteableColumnHeader name={'name'} text={'Name'} onClick={onClickColumHeader} />
+              <SorteableColumnHeader name={'dob'} text={'Date of birth'} onClick={onClickColumHeader} />
+              <SorteableColumnHeader name={'email'} text={'Email'} onClick={onClickColumHeader} />
+              <SorteableColumnHeader name={'gender'} text={'Gender'} onClick={onClickColumHeader} />
               <th>Phone</th>
             </tr>
           </thead>

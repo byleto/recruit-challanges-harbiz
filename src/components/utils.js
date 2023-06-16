@@ -18,8 +18,7 @@ const compareValues = (key, order = 'asc') => {
   };
 };
 
-
-export const sortByKey = (arrayToOrder, key) => {
-  return key !== '' ? arrayToOrder?.sort(compareValues(key)) : arrayToOrder;
+export const sortByKey = (arrayToOrder, key, sortOrder) => {
+  const isValid = key !== '' && sortOrder !== 'none';
+  return isValid ? arrayToOrder?.sort(compareValues(key, sortOrder)) : arrayToOrder;
 };
-
