@@ -8,10 +8,11 @@ import Image from 'react-bootstrap/Image';
 import Spinner from 'react-bootstrap/Spinner';
 import Stack from 'react-bootstrap/Stack';
 import Table from 'react-bootstrap/Table';
+import { sortByKey } from './utils';
 
 import { useQuery } from 'react-query';
 
-const USERS_RECORD_LIMIT = 20;
+const USERS_RECORD_LIMIT = 10;
 const USERS_ENDPOINT_URL = `https://randomuser.me/api/?results=${USERS_RECORD_LIMIT}`;
 
 const Username = ({ picture, name }) => {
@@ -33,15 +34,20 @@ export const UsersPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [gender, setGender] = useState('all');
+  const [sortBy, setSortBy] = useState('');
 
   const filteredUsers = useMemo(() => {
-    const genderFilter = (userGender) => gender === 'all'? true : userGender.toLowerCase() === gender.toLocaleLowerCase();
-    const nameFilter = (userName) => userName.toLowerCase().includes(name.toLowerCase())
-    const emailFilter = (userEmail) => userEmail.toLowerCase().includes(email.toLowerCase())
-    return users.filter((user) => nameFilter(user.name) && genderFilter(user.gender) && emailFilter(user.email));
-    
-  }, [users, gender, name, email]);
-  
+    const genderFilter = (userGender) =>
+      gender === 'all' ? true : userGender.toLowerCase() === gender.toLocaleLowerCase();
+    const nameFilter = (userName) => userName.toLowerCase().includes(name.toLowerCase());
+    const emailFilter = (userEmail) => userEmail.toLowerCase().includes(email.toLowerCase());
+
+    return sortByKey(
+      users.filter((user) => nameFilter(user.name) && genderFilter(user.gender) && emailFilter(user.email)),
+      sortBy,
+    );
+  }, [users, sortBy, gender, name, email]);
+
   const isEnabled = users.length === 0;
   const usersQuery = useQuery('users', getUsers, {
     enabled: isEnabled,
@@ -97,10 +103,10 @@ export const UsersPage = () => {
         <Table striped bordered hover>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>DOB</th>
-              <th>Email</th>
-              <th>Gender</th>
+              <th onClick={() => setSortBy('name')}>Name</th>
+              <th onClick={() => setSortBy('dob')}>DOB</th>
+              <th onClick={() => setSortBy('email')}>Email</th>
+              <th onClick={() => setSortBy('gender')}>Gender</th>
               <th>Phone</th>
             </tr>
           </thead>
