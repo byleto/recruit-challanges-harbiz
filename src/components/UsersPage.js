@@ -20,8 +20,9 @@ export const UsersPage = () => {
   const [sortOrder, setSortOrder] = useState(SortOrderEnum.None);
 
   const filteredUsers = useMemo(() => {
+    const allGenders = true;
     const genderFilter = (userGender) =>
-      gender === 'all' ? true : userGender.toLowerCase() === gender.toLocaleLowerCase();
+      gender === GenderEnum.All ? allGenders : userGender.toLowerCase() === gender.toLocaleLowerCase();
     const nameFilter = (userName) => userName.toLowerCase().includes(name.toLowerCase());
     const emailFilter = (userEmail) => userEmail.toLowerCase().includes(email.toLowerCase());
 
@@ -52,7 +53,7 @@ export const UsersPage = () => {
   const onClickColumHeader = (e) => {
     const id = e.target.id;
     if (id !== sortBy) {
-      setSortOrder('none');
+      setSortOrder(SortOrderEnum.None);
     }
     setSortBy(id);
     setSortOrder(getNextSortOrder(sortOrder));
