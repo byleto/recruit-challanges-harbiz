@@ -13,6 +13,7 @@ import { SorteableColumnHeader } from './SorteableColumnHeader';
 import { UserProfile } from './UserProfile';
 import { getNextSortOrder, getUsers, buildUsers, sortByKey } from './utils';
 import exportFromJSON from 'export-from-json';
+import { AlertCircle } from 'feather-icons-react';
 
 export const UsersPage = () => {
   const [users, setUsers] = useState([]);
@@ -30,7 +31,7 @@ export const UsersPage = () => {
       gender === GenderEnum.All ? allGenders : userGender.toLowerCase() === gender.toLocaleLowerCase();
     const nameFilter = (userName) => userName.toLowerCase().includes(name.toLowerCase());
     const emailFilter = (userEmail) => userEmail.toLowerCase().includes(email.toLowerCase());
-    setSelectedRows([]);
+
     return sortByKey(
       users.filter((user) => nameFilter(user.name) && genderFilter(user.gender) && emailFilter(user.email)),
       sortBy,
@@ -108,7 +109,14 @@ export const UsersPage = () => {
       <Stack gap="3">
         <h1 className="text-center mt-4">Users</h1>
         <Form>
-          {warning && selectedRows.length === 0 && <Alert variant={'danger'}>{warning}</Alert>}
+          {warning && selectedRows.length === 0 && (
+            <Alert variant={'warning'}>
+              <Stack direction="horizontal" gap={3}>
+                <AlertCircle size="16" />
+                {warning}
+              </Stack>
+            </Alert>
+          )}
           <Form.Group className="mb-3" controlId="name">
             <Form.Label>Name</Form.Label>
             <Form.Control onChange={(e) => setName(e.target.value)} value={name} placeholder="name of user" />
@@ -130,7 +138,27 @@ export const UsersPage = () => {
               placeholder="name@example.com"
             />
           </Form.Group>
-          <Button onClick={onClickExportButton}>Export to CSV</Button>
+          <Stack direction="horizontal" gap={3}>
+            <Button
+              variant="dark"
+              onClick={() => {
+                setSelectedRows([]);
+              }}
+            >
+              Clear selection
+            </Button>
+            <Button 
+              variant="dark"
+              onClick={() => {
+                setSelectedRows(filteredUsers);
+              }}
+            >
+              Select all
+            </Button>
+            <Button variant="dark" onClick={onClickExportButton}>
+              Export to CSV
+            </Button>
+          </Stack>
         </Form>
         <Table bordered hover>
           <thead>
