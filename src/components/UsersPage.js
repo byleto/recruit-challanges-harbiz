@@ -1,5 +1,3 @@
-import axios from 'axios';
-
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useMemo, useState } from 'react';
 import Container from 'react-bootstrap/Container';
@@ -7,24 +5,19 @@ import Form from 'react-bootstrap/Form';
 import Spinner from 'react-bootstrap/Spinner';
 import Stack from 'react-bootstrap/Stack';
 import Table from 'react-bootstrap/Table';
-import { sortByKey, getNextSortOrder } from './utils';
-import { UserProfile } from './UserProfile';
 import { useQuery } from 'react-query';
-import { USERS_ENDPOINT_URL } from '../constants';
+import { GenderEnum, SortOrderEnum, USERS_QUERY_KEY } from '../constants';
 import { SorteableColumnHeader } from './SorteableColumnHeader';
-
-const getUsers = async () => {
-  const response = await axios.get(USERS_ENDPOINT_URL);
-  return response.data;
-};
+import { UserProfile } from './UserProfile';
+import { getNextSortOrder, getUsers, buildUsers, sortByKey } from './utils';
 
 export const UsersPage = () => {
   const [users, setUsers] = useState([]);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [gender, setGender] = useState('all');
+  const [gender, setGender] = useState(GenderEnum.All);
   const [sortBy, setSortBy] = useState('');
-  const [sortOrder, setSortOrder] = useState('none');
+  const [sortOrder, setSortOrder] = useState(SortOrderEnum.None);
 
   const filteredUsers = useMemo(() => {
     const genderFilter = (userGender) =>
@@ -39,23 +32,15 @@ export const UsersPage = () => {
     );
   }, [users, sortBy, sortOrder, gender, name, email]);
 
-  const isEnabled = users.length === 0;
-  const usersQuery = useQuery('users', getUsers, {
-    enabled: isEnabled,
+  const enabledUsersQuery = users.length === 0;
+  const usersQuery = useQuery(USERS_QUERY_KEY, getUsers, {
+    enabled: enabledUsersQuery,
   });
   const { data: rawUsersData, isLoading, isFetching, isSuccess } = usersQuery;
 
   useEffect(() => {
     if (isSuccess) {
-      const formattedUsers = rawUsersData.results.map((user) => ({
-        id: user.id.value,
-        name: `${user.name.first} ${user.name.last}`,
-        dob: user.dob.date,
-        email: user.email,
-        gender: user.gender,
-        phone: user.phone,
-        picture: user.picture.thumbnail,
-      }));
+      const formattedUsers = buildUsers(rawUsersData);
       setUsers(formattedUsers);
     }
   }, [isSuccess, rawUsersData]);
@@ -85,9 +70,9 @@ export const UsersPage = () => {
           <Form.Group className="mb-3" controlId="gender">
             <Form.Label>Gender</Form.Label>
             <Form.Select onChange={(e) => setGender(e.target.value)} value={gender}>
-              <option value="all">Select a gender</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
+              <option value={GenderEnum.All}>Select a gender</option>
+              <option value={GenderEnum.Male}>Male</option>
+              <option value={GenderEnum.Female}>Female</option>
             </Form.Select>
           </Form.Group>
           <Form.Group className="mb-3" controlId="exampleForm.email">

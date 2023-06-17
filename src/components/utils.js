@@ -1,4 +1,5 @@
-import { SortOrderEnum } from '../constants';
+import { USERS_ENDPOINT_URL, SortOrderEnum } from '../constants';
+import axios from 'axios';
 
 const compareValues = (key, order = 'asc') => {
   //add as to a enum
@@ -34,3 +35,20 @@ export const getNextSortOrder = (order) => {
   };
   return sortOrderNextValue[order];
 };
+
+export const getUsers = async () => {
+  const response = await axios.get(USERS_ENDPOINT_URL);
+  return response.data;
+};
+
+export const buildUsers = (rawUsersData)  => {
+  return rawUsersData.results.map((user) => ({
+    id: user.id.value,
+    name: `${user.name.first} ${user.name.last}`,
+    dob: user.dob.date,
+    email: user.email,
+    gender: user.gender,
+    phone: user.phone,
+    picture: user.picture.thumbnail,
+  }));
+}
