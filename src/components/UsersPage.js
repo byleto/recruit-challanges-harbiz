@@ -18,6 +18,7 @@ export const UsersPage = () => {
   const [gender, setGender] = useState(GenderEnum.All);
   const [sortBy, setSortBy] = useState('');
   const [sortOrder, setSortOrder] = useState(SortOrderEnum.None);
+  const [selectedRows, setSelectedRows] = useState([]);
 
   const filteredUsers = useMemo(() => {
     const allGenders = true;
@@ -25,7 +26,7 @@ export const UsersPage = () => {
       gender === GenderEnum.All ? allGenders : userGender.toLowerCase() === gender.toLocaleLowerCase();
     const nameFilter = (userName) => userName.toLowerCase().includes(name.toLowerCase());
     const emailFilter = (userEmail) => userEmail.toLowerCase().includes(email.toLowerCase());
-
+    setSelectedRows([]);
     return sortByKey(
       users.filter((user) => nameFilter(user.name) && genderFilter(user.gender) && emailFilter(user.email)),
       sortBy,
@@ -59,6 +60,27 @@ export const UsersPage = () => {
     setSortOrder(getNextSortOrder(sortOrder));
   };
 
+  const onClickRowSelector = (event) => {
+    event.preventDefault();
+    const user = users.find((user) => {
+      return user.id === event.target.id;
+    });
+    const selectedUsers = [...selectedRows];
+    const isUserSelected = selectedUsers.includes(user);
+    if (isUserSelected) {
+      const index = selectedUsers.indexOf(user);
+      selectedUsers.splice(index, 1);
+    } else {
+      selectedUsers.push(user);
+    }
+    setSelectedRows(selectedUsers);
+  };
+
+  const getTrStyle = (user) => {
+    const isUserSelected = selectedRows.includes(user);
+    return isUserSelected ? { background: 'lightgray' } : { background: 'white' };
+  };
+
   return (
     <Container>
       <Stack gap="3">
@@ -86,9 +108,10 @@ export const UsersPage = () => {
             />
           </Form.Group>
         </Form>
-        <Table striped bordered hover>
+        <Table bordered hover>
           <thead>
             <tr>
+              <th style={{ background: 'black', color: 'white' }} />
               <SorteableColumnHeader
                 sortOrder={sortOrder}
                 fieldToSort={sortBy}
@@ -117,20 +140,25 @@ export const UsersPage = () => {
                 text={'Gender'}
                 onClick={onClickColumHeader}
               />
-              <th>Phone</th>
+              <th style={{ background: 'black', color: 'white' }}>Phone</th>
             </tr>
           </thead>
 
           <tbody>
             {filteredUsers?.map((user, index) => (
-              <tr key={user?.id || index}>
-                <td>
+              <tr style={{ ...getTrStyle(user), color: 'blue' }} key={user?.id || index}>
+                <td
+                  style={{ backgroundColor: 'inherit' }}
+                  id={user.id}
+                  onClick={onClickRowSelector}
+                ></td>
+                <td style={{ backgroundColor: 'inherit' }}>
                   <UserProfile name={user.name} picture={user.picture} />
                 </td>
-                <td>{user.dob}</td>
-                <td>{user.email}</td>
-                <td>{user.gender}</td>
-                <td>{user.phone}</td>
+                <td style={{ backgroundColor: 'inherit' }}>{user.dob}</td>
+                <td style={{ backgroundColor: 'inherit' }}>{user.email}</td>
+                <td style={{ backgroundColor: 'inherit' }}>{user.gender}</td>
+                <td style={{ backgroundColor: 'inherit' }}>{user.phone}</td>
               </tr>
             ))}
           </tbody>

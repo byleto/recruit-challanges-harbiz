@@ -1,5 +1,6 @@
 import { USERS_ENDPOINT_URL, SortOrderEnum } from '../constants';
 import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
 
 const compareValues = (key, order = 'asc') => {
   //add as to a enum
@@ -43,7 +44,7 @@ export const getUsers = async () => {
 
 export const buildUsers = (rawUsersData)  => {
   return rawUsersData.results.map((user) => ({
-    id: user.id.value,
+    id: user.id.value || uuidv4(),
     name: `${user.name.first} ${user.name.last}`,
     dob: user.dob.date,
     email: user.email,
