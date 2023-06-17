@@ -4,33 +4,14 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useMemo, useState } from 'react';
 import Container from 'react-bootstrap/Container';
 import Form from 'react-bootstrap/Form';
-import Image from 'react-bootstrap/Image';
 import Spinner from 'react-bootstrap/Spinner';
 import Stack from 'react-bootstrap/Stack';
 import Table from 'react-bootstrap/Table';
-import { sortByKey } from './utils';
-import { ArrowDown, ArrowUp } from 'feather-icons-react';
-
+import { sortByKey, getNextSortOrder } from './utils';
+import { UserProfile } from './UserProfile';
 import { useQuery } from 'react-query';
-
-const USERS_RECORD_LIMIT = 10;
-const USERS_ENDPOINT_URL = `https://randomuser.me/api/?results=${USERS_RECORD_LIMIT}`;
-
-const Username = ({ picture, name }) => {
-  return (
-    <Stack direction="horizontal" gap={3}>
-      <Image src={picture} roundedCircle />
-      <p>{name}</p>
-    </Stack>
-  );
-};
-
-const SortOrderIcon = ({ order }) => {
-  if (order === 'none') {
-    return null;
-  }
-  return order === 'asc' ? <ArrowDown size="16" /> : <ArrowUp size="16" />;
-};
+import { USERS_ENDPOINT_URL } from '../constants';
+import { SorteableColumnHeader } from './SorteableColumnHeader';
 
 const getUsers = async () => {
   const response = await axios.get(USERS_ENDPOINT_URL);
@@ -89,21 +70,7 @@ export const UsersPage = () => {
       setSortOrder('none');
     }
     setSortBy(id);
-    const sortOrderNextValue = {
-      none: 'asc',
-      asc: 'desc',
-      desc: 'none',
-    };
-    const newSortOder = sortOrderNextValue[sortOrder];
-    setSortOrder(newSortOder);
-  };
-
-  const SorteableColumnHeader = ({ onClick, name, text }) => {
-    return (
-      <th id={name} onClick={onClick}>
-        {text} {sortBy === name ? <SortOrderIcon order={sortOrder} /> : null}
-      </th>
-    );
+    setSortOrder(getNextSortOrder(sortOrder));
   };
 
   return (
@@ -111,11 +78,11 @@ export const UsersPage = () => {
       <Stack gap="3">
         <h1 className="text-center mt-4">Users</h1>
         <Form>
-          <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
+          <Form.Group className="mb-3" controlId="name">
             <Form.Label>Name</Form.Label>
             <Form.Control onChange={(e) => setName(e.target.value)} value={name} placeholder="name of user" />
           </Form.Group>
-          <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
+          <Form.Group className="mb-3" controlId="gender">
             <Form.Label>Gender</Form.Label>
             <Form.Select onChange={(e) => setGender(e.target.value)} value={gender}>
               <option value="all">Select a gender</option>
@@ -123,7 +90,7 @@ export const UsersPage = () => {
               <option value="female">Female</option>
             </Form.Select>
           </Form.Group>
-          <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
+          <Form.Group className="mb-3" controlId="exampleForm.email">
             <Form.Label>Email address</Form.Label>
             <Form.Control
               value={email}
@@ -136,10 +103,34 @@ export const UsersPage = () => {
         <Table striped bordered hover>
           <thead>
             <tr>
-              <SorteableColumnHeader name={'name'} text={'Name'} onClick={onClickColumHeader} />
-              <SorteableColumnHeader name={'dob'} text={'Date of birth'} onClick={onClickColumHeader} />
-              <SorteableColumnHeader name={'email'} text={'Email'} onClick={onClickColumHeader} />
-              <SorteableColumnHeader name={'gender'} text={'Gender'} onClick={onClickColumHeader} />
+              <SorteableColumnHeader
+                sortOrder={sortOrder}
+                fieldToSort={sortBy}
+                name={'name'}
+                text={'Name'}
+                onClick={onClickColumHeader}
+              />
+              <SorteableColumnHeader
+                sortOrder={sortOrder}
+                fieldToSort={sortBy}
+                name={'dob'}
+                text={'Date of birth'}
+                onClick={onClickColumHeader}
+              />
+              <SorteableColumnHeader
+                sortOrder={sortOrder}
+                fieldToSort={sortBy}
+                name={'email'}
+                text={'Email'}
+                onClick={onClickColumHeader}
+              />
+              <SorteableColumnHeader
+                sortOrder={sortOrder}
+                fieldToSort={sortBy}
+                name={'gender'}
+                text={'Gender'}
+                onClick={onClickColumHeader}
+              />
               <th>Phone</th>
             </tr>
           </thead>
@@ -148,7 +139,7 @@ export const UsersPage = () => {
             {filteredUsers?.map((user, index) => (
               <tr key={user?.id || index}>
                 <td>
-                  <Username name={user.name} picture={user.picture} />
+                  <UserProfile name={user.name} picture={user.picture} />
                 </td>
                 <td>{user.dob}</td>
                 <td>{user.email}</td>
