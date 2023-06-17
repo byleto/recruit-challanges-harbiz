@@ -5,11 +5,14 @@ import Form from 'react-bootstrap/Form';
 import Spinner from 'react-bootstrap/Spinner';
 import Stack from 'react-bootstrap/Stack';
 import Table from 'react-bootstrap/Table';
+import Button from 'react-bootstrap/Button';
+import Alert from 'react-bootstrap/Alert';
 import { useQuery } from 'react-query';
 import { GenderEnum, SortOrderEnum, USERS_QUERY_KEY } from '../constants';
 import { SorteableColumnHeader } from './SorteableColumnHeader';
 import { UserProfile } from './UserProfile';
 import { getNextSortOrder, getUsers, buildUsers, sortByKey } from './utils';
+import exportFromJSON from 'export-from-json';
 
 export const UsersPage = () => {
   const [users, setUsers] = useState([]);
@@ -19,6 +22,7 @@ export const UsersPage = () => {
   const [sortBy, setSortBy] = useState('');
   const [sortOrder, setSortOrder] = useState(SortOrderEnum.None);
   const [selectedRows, setSelectedRows] = useState([]);
+  const [warning, setWarning] = useState('');
 
   const filteredUsers = useMemo(() => {
     const allGenders = true;
@@ -39,6 +43,12 @@ export const UsersPage = () => {
     enabled: enabledUsersQuery,
   });
   const { data: rawUsersData, isLoading, isFetching, isSuccess } = usersQuery;
+
+  useEffect(() => {
+    if (selectedRows.length > 0) {
+      setWarning('');
+    }
+  }, [selectedRows.length]);
 
   useEffect(() => {
     if (isSuccess) {
@@ -76,6 +86,18 @@ export const UsersPage = () => {
     setSelectedRows(selectedUsers);
   };
 
+  const onClickExportButton = (event) => {
+    event.preventDefault();
+    const fileName = 'download';
+    const exportType = exportFromJSON.types.csv;
+
+    if (selectedRows.length > 0) {
+      exportFromJSON({ data: selectedRows, fileName, exportType });
+    } else {
+      setWarning('Select at least one row to export');
+    }
+  };
+
   const getTrStyle = (user) => {
     const isUserSelected = selectedRows.includes(user);
     return isUserSelected ? { background: 'lightgray' } : { background: 'white' };
@@ -86,6 +108,7 @@ export const UsersPage = () => {
       <Stack gap="3">
         <h1 className="text-center mt-4">Users</h1>
         <Form>
+          {warning && selectedRows.length === 0 && <Alert variant={'danger'}>{warning}</Alert>}
           <Form.Group className="mb-3" controlId="name">
             <Form.Label>Name</Form.Label>
             <Form.Control onChange={(e) => setName(e.target.value)} value={name} placeholder="name of user" />
@@ -107,6 +130,7 @@ export const UsersPage = () => {
               placeholder="name@example.com"
             />
           </Form.Group>
+          <Button onClick={onClickExportButton}>Export to CSV</Button>
         </Form>
         <Table bordered hover>
           <thead>
@@ -147,11 +171,7 @@ export const UsersPage = () => {
           <tbody>
             {filteredUsers?.map((user, index) => (
               <tr style={{ ...getTrStyle(user), color: 'blue' }} key={user?.id || index}>
-                <td
-                  style={{ backgroundColor: 'inherit' }}
-                  id={user.id}
-                  onClick={onClickRowSelector}
-                ></td>
+                <td style={{ backgroundColor: 'inherit' }} id={user.id} onClick={onClickRowSelector}></td>
                 <td style={{ backgroundColor: 'inherit' }}>
                   <UserProfile name={user.name} picture={user.picture} />
                 </td>
