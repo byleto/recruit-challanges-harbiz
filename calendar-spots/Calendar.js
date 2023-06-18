@@ -1,100 +1,36 @@
-const moment = require('moment')
-const fs = require('fs')
+import moment from 'moment'
+import differenceWith from 'lodash/differenceWith'
+import isEqual from 'lodash/isEqual'
+import { getOneMiniSlot, validateCalendar } from './utils'
 
-//
-export function getAvailableSpots (calendar, date, duration) {
-  const rawdata = fs.readFileSync('./calendars/calendar.' + calendar + '.json')
-  const data = JSON.parse(rawdata)
-  const dateISO = moment(date, 'DD-MM-YYYY').format('YYYY-MM-DD')
-  const durationBefore = data.durationBefore
-  const durationAfter = data.durationAfter
-  let daySlots = []
-  for (const key in data.slots) {
-    if (key === date) {
-      daySlots = data.slots[key]
-    }
+export default class Calendar {
+  constructor (calendar) {
+    validateCalendar(calendar)
+    this.durationBefore = calendar.durationBefore
+    this.durationAfter = calendar.durationAfter
+    this.slots = calendar.slots
+    this.sessions = calendar.sessions
   }
 
-  const realSpots = []
-  daySlots.forEach(daySlot => {
-    if (data.sessions && data.sessions[date]) {
-      let noConflicts = true
-      data.sessions[date].forEach(sessionSlot => {
-        const sessionStart = moment(dateISO + ' ' + sessionSlot.start).valueOf()
-        const sessionEnd = moment(dateISO + ' ' + sessionSlot.end).valueOf()
-        const start = moment(dateISO + ' ' + daySlot.start).valueOf()
-        const end = moment(dateISO + ' ' + daySlot.end).valueOf()
-        if (sessionStart > start && sessionEnd < end) {
-          realSpots.push({ start: daySlot.start, end: sessionSlot.start })
-          realSpots.push({ start: sessionSlot.end, end: daySlot.end })
-          noConflicts = false
-        } else if (sessionStart === start && sessionEnd < end) {
-          realSpots.push({ start: sessionSlot.end, end: daySlot.end })
-          noConflicts = false
-        } else if (sessionStart > start && sessionEnd === end) {
-          realSpots.push({ start: daySlot.start, end: sessionSlot.start })
-          noConflicts = false
-        } else if (sessionStart === start && sessionEnd === end) {
-          noConflicts = false
-        }
-      })
-      if (noConflicts) {
-        realSpots.push(daySlot)
+  getAvailableSpots (date, duration) {
+    const dateISO = moment(date, 'DD-MM-YYYY').format('YYYY-MM-DD')
+    const daySlots = this.slots[date]
+    const sessions = this.sessions[date]
+
+    const realSpots = differenceWith(daySlots, sessions, isEqual)
+
+    const sessionDuration = {
+      time: duration,
+      timeBefore: this.durationBefore,
+      timeAfter: this.durationAfter
+    }
+
+    return realSpots.reduce((result, slot) => {
+      const availableSlot = getOneMiniSlot(dateISO, slot, sessionDuration)
+      if (availableSlot) {
+        result.push(availableSlot)
       }
-    } else {
-      realSpots.push(daySlot)
-    }
-  })
-
-  const arrSlot = []
-  realSpots.forEach(function (slot) {
-    let init = 0
-    let startHour
-    let endHour
-    let clientStartHour
-    let clientEndHour
-
-    function getMomentHour (hour) {
-      const finalHourForAdd = moment(dateISO + ' ' + hour)
-      return finalHourForAdd
-    }
-    function addMinutes (hour, minutes) {
-      const result = moment(hour).add(minutes, 'minutes').format('HH:mm')
       return result
-    }
-
-    function getOneMiniSlot (startSlot, endSlot) {
-      const startHourFirst = getMomentHour(startSlot)
-
-      startHour = startHourFirst.format('HH:mm')
-      endHour = addMinutes(startHourFirst, durationBefore + duration + durationAfter)
-      clientStartHour = addMinutes(startHourFirst, durationBefore)
-      clientEndHour = addMinutes(startHourFirst, duration)
-
-      if (moment.utc(endHour, 'HH:mm').valueOf() > moment.utc(endSlot, 'HH:mm').valueOf()) {
-        return null
-      }
-      const objSlot = {
-        startHour: moment.utc(dateISO + ' ' + startHour).toDate(),
-        endHour: moment.utc(dateISO + ' ' + endHour).toDate(),
-        clientStartHour: moment.utc(dateISO + ' ' + clientStartHour).toDate(),
-        clientEndHour: moment.utc(dateISO + ' ' + clientEndHour).toDate()
-      }
-      init = init + 1
-      return objSlot
-    }
-
-    let start = slot.start
-    let resultSlot
-    do {
-      resultSlot = getOneMiniSlot(start, slot.end)
-      if (resultSlot) {
-        arrSlot.push(resultSlot)
-        start = moment.utc(resultSlot.endHour).format('HH:mm')
-      }
-    } while (resultSlot)
-
-    return arrSlot
-  })
-  return arrSlot
+    }, [])
+  }
 }
