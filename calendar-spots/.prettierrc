@@ -1,0 +1,19 @@
+{
+    "printWidth": 100,
+    "tabWidth": 2,
+    "useTabs": false,
+    "semi": false,
+    "singleQuote": true,
+    "trailingComma": "none",
+    "bracketSpacing": true,
+    "bracketSameLine": true,
+    "arrowParens": "avoid",
+    "overrides": [
+      {
+        "files": "examples/*/**/*.!(css|scss)*",
+        "options": {
+          "printWidth": 80
+        }
+      }
+    ]
+  }
