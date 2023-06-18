@@ -1,4 +1,13 @@
+
 # Getting Started with Create React App
+
+## Demo
+### Video Demo
+https://drive.google.com/file/d/1qfmqlWGmYLzydzIHGwDW8wJxFEVn145N/view?usp=sharing
+
+### How the selection of rows works
+To select a row you new to click the row header selector
+![selecionGif](https://github.com/byleto/recruit-challanges-harbiz/assets/1657364/677e7aa7-ddae-49f7-a0d8-0409a7f44002)
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
